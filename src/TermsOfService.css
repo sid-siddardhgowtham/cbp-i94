@@ -1,0 +1,253 @@
+* {
+  box-sizing: border-box;
+}
+
+.terms-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: transparent;
+}
+
+/* Dim and blur only the page content below the blue navigation bar.
+   Keep the header/navigation clear, while the terms dialog stays centered
+   in the full browser viewport. */
+.terms-overlay::before {
+  content: "";
+  position: fixed;
+  top: 150px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  /* Opaque horizontal grey bands matching the reference screenshot.
+     No page content shows through this layer. */
+  background: repeating-linear-gradient(
+    to bottom,
+    #a2a4a7 0,
+    #a2a4a7 35px,
+    #aaaaaa 35px,
+    #aaaaaa 50px
+  );
+  pointer-events: none;
+}
+
+.terms-modal {
+  z-index: 1;
+}
+
+.terms-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(635px, calc(100vw - 32px));
+  height: min(615px, calc(100vh - 40px));
+  min-height: 360px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, .32);
+  color: #68727d;
+}
+
+.terms-close {
+  position: absolute;
+  z-index: 2;
+  top: 8px;
+  right: 25px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111;
+  font-size: 31px;
+  font-weight: 300;
+  line-height: 30px;
+  cursor: pointer;
+}
+
+.terms-header {
+  flex: 0 0 138px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 50px 8px;
+  background: #fff;
+}
+
+.terms-header h1 {
+  margin: 0 0 8px;
+  color: #08294f;
+  font-size: 25px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-align: center;
+}
+
+.terms-header img {
+  width: 82px;
+  height: 82px;
+  object-fit: contain;
+}
+
+.terms-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 18px 12px;
+  color: #68727d;
+  font-size: 17px;
+  line-height: 1.48;
+  letter-spacing: .15px;
+  scrollbar-width: auto;
+}
+
+.terms-scroll p {
+  margin: 0 0 18px;
+}
+
+.terms-scroll strong {
+  color: #65717d;
+  font-weight: 700;
+}
+
+.terms-scroll ul {
+  margin: 0 0 20px;
+  padding-left: 40px;
+}
+
+.terms-scroll li {
+  padding-left: 2px;
+  margin: 0 0 3px;
+}
+
+.terms-scroll hr {
+  border: 0;
+  border-top: 1px solid #ddd;
+  margin: 18px 0;
+}
+
+.terms-actions {
+  flex: 0 0 58px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  padding: 7px 17px 9px;
+  background: #fff;
+}
+
+.terms-actions button {
+  min-width: 0;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  padding: 9px 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.terms-decline {
+  background: #f5f5f5;
+  color: #111;
+}
+
+.terms-agree {
+  background: #071f43;
+  color: #fff;
+  border-color: #071f43 !important;
+}
+
+.terms-agree:disabled {
+  background: #e1e1e1;
+  color: #929292;
+  border-color: #e1e1e1 !important;
+  cursor: not-allowed;
+}
+
+.terms-exit-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #f5f5f5;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.terms-exit-card {
+  width: min(460px, 100%);
+  padding: 32px;
+  text-align: center;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px #0002;
+}
+
+.terms-exit-seal {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 16px;
+}
+
+.terms-exit-card h1 {
+  color: #08294f;
+  font-size: 23px;
+}
+
+.terms-exit-card p {
+  color: #555;
+  line-height: 1.5;
+}
+
+.terms-exit-card button {
+  border: 0;
+  border-radius: 4px;
+  padding: 12px 18px;
+  color: #fff;
+  background: #071f43;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .terms-overlay {
+    padding: 10px;
+  }
+
+  .terms-overlay::before {
+    top: 150px;
+  }
+
+  .terms-modal {
+    width: 100%;
+    height: min(680px, calc(100vh - 20px));
+  }
+
+  .terms-header {
+    flex-basis: 124px;
+  }
+
+  .terms-header h1 {
+    font-size: 22px;
+  }
+
+  .terms-header img {
+    width: 70px;
+    height: 70px;
+  }
+
+  .terms-scroll {
+    font-size: 15px;
+    padding: 0 14px 10px;
+  }
+
+  .terms-actions {
+    grid-template-columns: 1fr;
+    flex-basis: 108px;
+    gap: 6px;
+    padding: 7px 12px;
+  }
+}
