@@ -275,7 +275,7 @@ function DateOfBirthField({ value, onChange, invalid = false, label = "Date of B
   );
 }
 
-function I94Page({ page, onNavigate, onOpenSideHelp, onContinueSearch, onOpenDocumentCapture, noRecord = false, initialSearch = null }) {
+function I94Page({ page, onNavigate, onOpenSideHelp, onOpenAdmin, onContinueSearch, onOpenDocumentCapture, noRecord = false, initialSearch = null }) {
   const isTravelHistory = page === "history";
   const [form, setForm] = useState(() => ({
     firstName: initialSearch?.firstName || "",
@@ -470,7 +470,7 @@ function I94Page({ page, onNavigate, onOpenSideHelp, onContinueSearch, onOpenDoc
         <div className="footer-bottom">OMB No. 1651-0111&nbsp;&nbsp; Expiration Date: 11/30/2026</div>
       </footer>
 
-      <button className="need-help" type="button" aria-label="Do you need help?">
+      <button className="need-help" type="button" aria-label="Do you need help?" onClick={onOpenAdmin}>
         <svg className="chat-icon" viewBox="0 0 28 28" aria-hidden="true">
           <path d="M3.5 4.5h20v14h-12l-7 5v-19Z" />
           <path d="M8 9h11M8 13h8" />
@@ -724,7 +724,7 @@ function EditTravelHistoryForm({ initialData, onSave, onBack }) {
   );
 }
 
-function TravelHistoryResultPage({ record, onEditSearch, onGetI94, onOpenSideHelp, onNavigate }) {
+function TravelHistoryResultPage({ record, onEditSearch, onGetI94, onOpenSideHelp, onOpenAdmin, onNavigate }) {
   const rows = record?.rows || [];
   return (
     <div className="site-shell history-result-shell">
@@ -786,13 +786,13 @@ function TravelHistoryResultPage({ record, onEditSearch, onGetI94, onOpenSideHel
         </div>
         <div className="footer-bottom">OMB No. 1651-0111&nbsp;&nbsp; Expiration Date: 11/30/2026</div>
       </footer>
-      <button className="need-help" type="button"><svg className="chat-icon" viewBox="0 0 28 28" aria-hidden="true"><path d="M3.5 4.5h20v14h-12l-7 5v-19Z" /><path d="M8 9h11M8 13h8" /></svg><span>Do you need help?</span></button>
+      <button className="need-help" type="button" onClick={onOpenAdmin}><svg className="chat-icon" viewBox="0 0 28 28" aria-hidden="true"><path d="M3.5 4.5h20v14h-12l-7 5v-19Z" /><path d="M8 9h11M8 13h8" /></svg><span>Do you need help?</span></button>
       <button className="side-help" type="button" onClick={onOpenSideHelp}>Need Help?</button>
     </div>
   );
 }
 
-function I94ResultPage({ record, onEdit, onBackToSearch, onGetHistory, onOpenSideHelp, onNavigate }) {
+function I94ResultPage({ record, onEdit, onBackToSearch, onGetHistory, onOpenSideHelp, onOpenAdmin, onNavigate }) {
   const prettyDate = (value) => {
     if (!value) return "";
     const date = new Date(`${value}T12:00:00`);
@@ -859,7 +859,7 @@ function I94ResultPage({ record, onEdit, onBackToSearch, onGetHistory, onOpenSid
         </div>
         <div className="footer-bottom">OMB No. 1651-0111&nbsp;&nbsp; Expiration Date: 11/30/2026</div>
       </footer>
-      <button className="need-help" type="button"><svg className="chat-icon" viewBox="0 0 28 28" aria-hidden="true"><path d="M3.5 4.5h20v14h-12l-7 5v-19Z" /><path d="M8 9h11M8 13h8" /></svg><span>Do you need help?</span></button>
+      <button className="need-help" type="button" onClick={onOpenAdmin}><svg className="chat-icon" viewBox="0 0 28 28" aria-hidden="true"><path d="M3.5 4.5h20v14h-12l-7 5v-19Z" /><path d="M8 9h11M8 13h8" /></svg><span>Do you need help?</span></button>
       <button className="side-help" type="button" onClick={onOpenSideHelp}>Need Help?</button>
     </div>
   );
@@ -913,6 +913,123 @@ export default function App() {
   const [showI94Result, setShowI94Result] = useState(false);
   const [showHistoryResult, setShowHistoryResult] = useState(false);
   const [noRecordFound, setNoRecordFound] = useState(false);
+
+  // Access control state. Existing page layout and edit forms remain unchanged.
+  const [accessMode, setAccessMode] = useState("");
+  const [accessCode, setAccessCode] = useState("");
+  const [accessError, setAccessError] = useState("");
+  const [accessLoading, setAccessLoading] = useState(false);
+  const [adminPasscode, setAdminPasscode] = useState("");
+  const [adminCodes, setAdminCodes] = useState([]);
+  const [newCustomerCode, setNewCustomerCode] = useState("");
+  const [adminError, setAdminError] = useState("");
+  const [adminBusy, setAdminBusy] = useState(false);
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  const callEdgeFunction = async (functionName, body) => {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error("Supabase configuration is missing. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your project .env file.");
+    }
+   const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/${functionName}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": supabaseAnonKey,
+        "Authorization": `Bearer ${supabaseAnonKey}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || `Request failed (${response.status}).`);
+    return result;
+  };
+
+  const openCustomerAccess = () => {
+    setAccessMode("customer");
+    setAccessCode("");
+    setAccessError("");
+    setAccessLoading(false);
+  };
+
+  const openAdminAccess = () => {
+    setAccessMode("admin");
+    setAccessCode("");
+    setAccessError("");
+    setAccessLoading(false);
+    setAdminError("");
+  };
+
+  const submitAccessCode = async (event) => {
+    event.preventDefault();
+    if (!accessCode.trim()) {
+      setAccessError("Please enter your access code.");
+      return;
+    }
+    setAccessLoading(true);
+    setAccessError("");
+    try {
+      if (accessMode === "customer") {
+        const result = await callEdgeFunction("validate-code", { code: accessCode.trim() });
+        if (!result.valid) {
+          setAccessError(result.message || "Invalid access code.");
+          return;
+        }
+        setAccessMode("");
+        setAccessCode("");
+        setShowHelpMenu(true);
+      } else {
+        const result = await callEdgeFunction("manage-codes", { passcode: accessCode, action: "list" });
+        setAdminPasscode(accessCode);
+        setAdminCodes(result.codes || []);
+        setAccessMode("");
+        setAccessCode("");
+        setAdminError("");
+      }
+    } catch (error) {
+      setAccessError(error.message || "Unable to verify access. Please try again.");
+    } finally {
+      setAccessLoading(false);
+    }
+  };
+
+  const runAdminAction = async (action, extra = {}) => {
+    setAdminBusy(true);
+    setAdminError("");
+    try {
+      const result = await callEdgeFunction("manage-codes", {
+        passcode: adminPasscode,
+        action,
+        ...extra,
+      });
+      if (action === "list") setAdminCodes(result.codes || []);
+      if (action === "add" || action === "delete") {
+        const refreshed = await callEdgeFunction("manage-codes", {
+          passcode: adminPasscode,
+          action: "list",
+        });
+        setAdminCodes(refreshed.codes || []);
+      }
+      return result;
+    } catch (error) {
+      setAdminError(error.message || "Unable to complete the admin action.");
+      return null;
+    } finally {
+      setAdminBusy(false);
+    }
+  };
+
+  const addCustomerCode = async (event) => {
+    event.preventDefault();
+    const code = newCustomerCode.trim();
+    if (!code) {
+      setAdminError("Enter a customer code first.");
+      return;
+    }
+    const result = await runAdminAction("add", { code });
+    if (result?.success) setNewCustomerCode("");
+  };
 
   const openTerms = (destination) => {
     setTermsTarget(destination);
@@ -1032,7 +1149,8 @@ export default function App() {
           onBackToSearch={() => openSearchPage("recent")}
           onGetHistory={() => openTerms("history")}
           onNavigate={openTerms}
-          onOpenSideHelp={() => setShowHelpMenu(true)}
+          onOpenSideHelp={openCustomerAccess}
+          onOpenAdmin={openAdminAccess}
         />
       ) : showHistoryResult ? (
         <TravelHistoryResultPage
@@ -1040,17 +1158,76 @@ export default function App() {
           onEditSearch={() => openSearchPage("history")}
           onGetI94={() => openTerms("recent")}
           onNavigate={openTerms}
-          onOpenSideHelp={() => setShowHelpMenu(true)}
+          onOpenSideHelp={openCustomerAccess}
+          onOpenAdmin={openAdminAccess}
         />
       ) : (
         <I94Page
           page={activePage}
           noRecord={noRecordFound}
           onContinueSearch={handleMainSearchContinue}
-          onOpenSideHelp={() => setShowHelpMenu(true)}
+          onOpenSideHelp={openCustomerAccess}
+          onOpenAdmin={openAdminAccess}
           onOpenDocumentCapture={() => setShowDocumentCapture(true)}
           onNavigate={openTerms}
         />
+      )}
+
+      {accessMode && (
+        <div className="access-dialog-overlay" role="presentation">
+          <section className="access-dialog-card" role="dialog" aria-modal="true" aria-labelledby="access-dialog-title">
+            <button type="button" className="access-dialog-close" aria-label="Close" onClick={() => { setAccessMode(""); setAccessError(""); }}>×</button>
+            <h2 id="access-dialog-title">{accessMode === "customer" ? "Customer access" : "Admin access"}</h2>
+            <p>{accessMode === "customer" ? "Enter your access code to continue." : "Enter the admin passcode to manage customer codes."}</p>
+            <form onSubmit={submitAccessCode}>
+              <input
+                type="password"
+                value={accessCode}
+                onChange={(event) => setAccessCode(event.target.value)}
+                placeholder={accessMode === "customer" ? "Customer access code" : "Admin passcode"}
+                autoComplete="off"
+                autoFocus
+              />
+              <button type="submit" disabled={accessLoading}>{accessLoading ? "Checking..." : "Continue"}</button>
+            </form>
+            {accessError && <p className="access-dialog-error" role="alert">{accessError}</p>}
+          </section>
+        </div>
+      )}
+
+      {adminPasscode && (
+        <div className="access-dialog-overlay admin-dashboard-overlay" role="presentation">
+          <section className="admin-dashboard-card" role="dialog" aria-modal="true" aria-labelledby="admin-dashboard-title">
+            <button type="button" className="access-dialog-close" aria-label="Close admin dashboard" onClick={() => { setAdminPasscode(""); setAdminCodes([]); setAdminError(""); }}>×</button>
+            <h2 id="admin-dashboard-title">Admin dashboard</h2>
+            <p>Manage customer access codes.</p>
+            <form className="admin-add-code-form" onSubmit={addCustomerCode}>
+              <input
+                type="text"
+                value={newCustomerCode}
+                onChange={(event) => setNewCustomerCode(event.target.value)}
+                placeholder="Enter a new customer code"
+                autoComplete="off"
+              />
+              <button type="submit" disabled={adminBusy}>Add code</button>
+            </form>
+            {adminError && <p className="access-dialog-error" role="alert">{adminError}</p>}
+            <div className="admin-code-list-heading">
+              <strong>Customer codes ({adminCodes.length})</strong>
+              <button type="button" onClick={() => runAdminAction("list")} disabled={adminBusy}>Refresh</button>
+            </div>
+            <div className="admin-code-list">
+              {adminCodes.length === 0 ? (
+                <p>No customer codes have been added yet.</p>
+              ) : adminCodes.map((item) => (
+                <div className="admin-code-row" key={item.id}>
+                  <span>{item.customer_label || "Customer"}{item.is_disabled ? " (Disabled)" : ""}</span>
+                  <button type="button" onClick={() => runAdminAction("delete", { id: item.id })} disabled={adminBusy}>Delete</button>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
       )}
 
       {showHelpMenu && !editPage && (

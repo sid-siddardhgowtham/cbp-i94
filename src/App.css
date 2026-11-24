@@ -1328,3 +1328,55 @@ h1 {
 .history-date-field .dob-calendar {
   left: 0;
 }
+
+
+/* Access dialogs only: the existing page and form styles are not modified. */
+.access-dialog-overlay {
+  position: fixed; inset: 0; z-index: 1200; display: flex;
+  align-items: center; justify-content: center; padding: 20px;
+  background: rgba(0, 0, 0, .62);
+}
+.access-dialog-card, .admin-dashboard-card {
+  position: relative; width: min(460px, 100%); max-height: min(82vh, 720px);
+  overflow: auto; padding: 30px; border-radius: 8px; background: #fff;
+  color: #26384d; box-shadow: 0 12px 38px rgba(0, 0, 0, .3);
+  font-family: Arial, Helvetica, sans-serif;
+}
+.access-dialog-card h2, .admin-dashboard-card h2 {
+  margin: 0 34px 14px 0; color: #26384d; font-size: 24px;
+}
+.access-dialog-card p, .admin-dashboard-card p { margin: 0 0 16px; line-height: 1.45; }
+.access-dialog-close {
+  position: absolute; top: 10px; right: 14px; border: 0;
+  background: transparent; color: #445; font-size: 28px; cursor: pointer;
+}
+.access-dialog-card form, .admin-add-code-form { display: flex; flex-direction: column; gap: 12px; }
+.access-dialog-card input, .admin-add-code-form input {
+  width: 100%; min-height: 44px; padding: 10px 12px;
+  border: 1px solid #b9c4d1; border-radius: 5px; color: #1d2d40; background: #fff;
+}
+.access-dialog-card form button, .admin-add-code-form button,
+.admin-code-list-heading button, .admin-code-row button {
+  min-height: 40px; padding: 9px 15px; border: 0; border-radius: 5px;
+  background: #075a91; color: #fff; font-weight: 600; cursor: pointer;
+}
+.access-dialog-card button:disabled, .admin-dashboard-card button:disabled { opacity: .6; cursor: wait; }
+.access-dialog-error { margin: 12px 0 0 !important; color: #c52222; font-size: 14px; }
+.admin-dashboard-card { width: min(560px, 100%); }
+.admin-add-code-form { flex-direction: row; margin: 18px 0 22px; }
+.admin-add-code-form button { flex: 0 0 auto; }
+.admin-code-list-heading {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;
+}
+.admin-code-list { max-height: 330px; overflow: auto; border-top: 1px solid #d9e0e7; }
+.admin-code-list > p { padding: 14px 0; color: #657386; }
+.admin-code-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 11px 0; border-bottom: 1px solid #e2e7ec;
+}
+.admin-code-row span { overflow-wrap: anywhere; }
+.admin-code-row button { background: #a92b2b; }
+@media (max-width: 520px) {
+  .access-dialog-card, .admin-dashboard-card { padding: 26px 20px 22px; }
+  .admin-add-code-form { flex-direction: column; }
+}
